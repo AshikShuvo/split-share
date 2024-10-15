@@ -14,19 +14,65 @@ datasource db {
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  password   String
-  firstName  String
-  lastName   String
-  roles      Role[]
-  isVerified Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          Int           @id @default(autoincrement())
+  email       String        @unique
+  password    String
+  firstName   String
+  lastName    String
+  roles       Role[]
+  isVerified  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Event       Event[]
+  EventMember EventMember[]
+  Spending    Spending[]
 }
 
 enum Role {
   user
   admin
   superadmin
+}
+
+model Event {
+  id        Int           @id @default(autoincrement())
+  name      String
+  ownerId   Int // Foreign key referencing User as the event owner
+  owner     User          @relation(fields: [ownerId], references: [id]) // Owner relation
+  members   EventMember[] // List of members in the event
+  spendings Spending[] // Spendings related to the event
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model EventMember {
+  id                   Int                    @id @default(autoincrement())
+  userId               Int // Foreign key referencing the user
+  user                 User                   @relation(fields: [userId], references: [id])
+  eventId              Int // Foreign key referencing the event
+  event                Event                  @relation(fields: [eventId], references: [id])
+  SpendingDistribution SpendingDistribution[]
+}
+
+model Spending {
+  id            Int                    @id @default(autoincrement())
+  amount        Float // Amount of money spent
+  description   String? // Optional description of the spending
+  payerId       Int // Foreign key to the user who paid
+  payer         User                   @relation(fields: [payerId], references: [id])
+  eventId       Int // Foreign key referencing the event
+  event         Event                  @relation(fields: [eventId], references: [id])
+  distributions SpendingDistribution[] // Tracks how spending is divided
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+}
+
+model SpendingDistribution {
+  id         Int         @id @default(autoincrement())
+  spendingId Int // Foreign key to the spending entry
+  spending   Spending    @relation(fields: [spendingId], references: [id])
+  memberId   Int // Foreign key to the event member who owes money
+  member     EventMember @relation(fields: [memberId], references: [id])
+  amount     Float // The amount this member owes for the spending
+  isPaid     Boolean     @default(false) // Whether the member has paid this amount
 }
