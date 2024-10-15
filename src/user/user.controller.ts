@@ -1,7 +1,10 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { CreateUserDto } from './dtos/CreateUser.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { Roles } from '../common/decorator/roles.decorator';
+import { Role } from '../auth/dto/role.enum';
 
 @ApiTags('Users')
 @Controller('users')
@@ -21,6 +24,9 @@ export class UserController {
   @ApiOperation({ summary: 'Get user by email' })
   @ApiResponse({ status: 200, description: 'User found.' })
   @ApiResponse({ status: 404, description: 'User not found.' })
+  @UseGuards(AuthGuard('jwt')) // Protect this route
+  // @Roles(Role.Admin)
+  @ApiBearerAuth()
   @Get(':email')
   async getUserByEmail(@Param('email') email: string) {
     return this.userService.findUserByEmail(email);

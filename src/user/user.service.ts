@@ -1,6 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { CreateUserDto } from './dtos/CreateUser.dto';
 
 @Injectable()
@@ -29,6 +29,7 @@ export class UserService {
         firstName: data.firstName,
         lastName: data.lastName,
         password: data.password, // In a real app, hash the password here
+        roles: [Role.user], // Default role
       },
     });
   }

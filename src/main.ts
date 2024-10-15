@@ -25,6 +25,7 @@ async function bootstrap() {
     .setTitle('My API')
     .setDescription('API documentation for my NestJS project')
     .setVersion('1.0')
+    .addBearerAuth() // This adds JWT support in Swagger
     .addTag('API')
     .build();
 
