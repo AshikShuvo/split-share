@@ -14,18 +14,20 @@ datasource db {
 }
 
 model User {
-  id          Int           @id @default(autoincrement())
-  email       String        @unique
-  password    String
-  firstName   String
-  lastName    String
-  roles       Role[]
-  isVerified  Boolean       @default(false)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  Event       Event[]
-  EventMember EventMember[]
-  Spending    Spending[]
+  id                  Int           @id @default(autoincrement())
+  email               String        @unique
+  password            String
+  firstName           String
+  lastName            String
+  roles               Role[]
+  isVerified          Boolean       @default(false)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  Event               Event[]
+  EventMember         EventMember[]
+  Spending            Spending[]
+  sentInvitations     Invitation[]  @relation("InviterRelation")
+  receivedInvitations Invitation[]  @relation("InviteeRelation")
 }
 
 enum Role {
@@ -35,23 +37,25 @@ enum Role {
 }
 
 model Event {
-  id        Int           @id @default(autoincrement())
-  name      String
-  ownerId   Int // Foreign key referencing User as the event owner
-  owner     User          @relation(fields: [ownerId], references: [id]) // Owner relation
-  members   EventMember[] // List of members in the event
-  spendings Spending[] // Spendings related to the event
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id         Int           @id @default(autoincrement())
+  name       String
+  ownerId    Int
+  owner      User          @relation(fields: [ownerId], references: [id])
+  members    EventMember[]
+  spendings  Spending[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  Invitation Invitation[]
 }
 
 model EventMember {
   id                   Int                    @id @default(autoincrement())
-  userId               Int // Foreign key referencing the user
+  userId               Int
   user                 User                   @relation(fields: [userId], references: [id])
-  eventId              Int // Foreign key referencing the event
+  eventId              Int
   event                Event                  @relation(fields: [eventId], references: [id])
   SpendingDistribution SpendingDistribution[]
+  prepaidAmount        Float                  @default(0) // Initial value set to 0
 }
 
 model Spending {
@@ -75,4 +79,29 @@ model SpendingDistribution {
   member     EventMember @relation(fields: [memberId], references: [id])
   amount     Float // The amount this member owes for the spending
   isPaid     Boolean     @default(false) // Whether the member has paid this amount
+}
+
+model Invitation {
+  id      Int   @id @default(autoincrement())
+  eventId Int
+  event   Event @relation(fields: [eventId], references: [id])
+
+  inviterId Int // The user who sends the invitation (event owner)
+  inviter   User @relation("InviterRelation", fields: [inviterId], references: [id])
+
+  inviteeId Int // The user who is invited
+  invitee   User @relation("InviteeRelation", fields: [inviteeId], references: [id])
+
+  status         InvitationStatus @default(PENDING) // Pending, Accepted, Rejected, Canceled
+  expirationDate DateTime // Expiration time for the invitation (15 minutes)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELED
 }
