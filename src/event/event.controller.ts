@@ -3,7 +3,8 @@ import { EventService } from './event.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateEventDto } from './dto/CreateEventDto';
-import { GetUser, GetUserType } from '../common/decorator/get-user.decorator'; // Custom decorator to get logged-in user
+import { GetUser, GetUserType } from '../common/decorator/get-user.decorator';
+import { CreateSpendingDto } from './dto/CreateSpendingDto'; // Custom decorator to get logged-in user
 
 @ApiTags('Events')
 @Controller('events')
@@ -38,5 +39,38 @@ export class EventController {
   @Get(':id')
   async getEventById(@Param('id') id: number) {
     return this.eventService.getEventById(id);
+  }
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Prepay to an event as a member' })
+  @Post(':id/prepay/:amount')
+  async prepayToEvent(
+    @GetUser() user: GetUserType,
+    @Param('amount') amount: number,
+    @Param('id') eventId: number
+  ) {
+    return this.eventService.prepayToEvent(user.userId, eventId, amount);
+  }
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Add spending to an event' })
+  @Post(':id/add-spending')
+  async addSpending(
+    @GetUser() user: GetUserType,
+    @Param('id') eventId: number,
+    @Body() createSpending: CreateSpendingDto
+  ) {
+    const {amount, description, payees} = createSpending
+    return this.eventService.addSpending(user.userId, eventId, amount, description, payees);
+  }
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get settlement info for an event' })
+  @Get(':id/settlement')
+  async getSettlement(
+    @GetUser() user : GetUserType,
+    @Param('id') eventId: number,
+  ) {
+    return this.eventService.getSettlement(user.userId, eventId);
   }
 }
