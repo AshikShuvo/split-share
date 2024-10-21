@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from '../user/dtos/CreateUser.dto';
+import { $Enums } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,9 @@ export class AuthService {
       ...createUserDto,
       password: hashedPassword,
     });
-    return user;
+    // auto login after signup
+    const payload = {email: user.email, sub: user.id, roles: user.roles}
+    return this.signToken(payload);
   }
 
   // User Sign In (Login)
@@ -29,7 +32,12 @@ export class AuthService {
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) throw new UnauthorizedException('Invalid credentials');
 
-    const payload = { email: user.email, sub: user.id, roles: user.roles };
+    const payload = { email: user.email, sub: user.id, roles: user.roles};
+    return this.signToken(payload);
+
+  }
+  // sign in jwt token has been seperated so that we can use it in both signin and sign up
+  private async signToken(payload: { email: string; sub: number; roles: $Enums.Role[]; }) {
     return {
       access_token: this.jwtService.sign(payload),
     };
