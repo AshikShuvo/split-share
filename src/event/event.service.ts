@@ -48,31 +48,26 @@ export class EventService {
   async prepayToEvent(userId: number, eventId: number, amount: number) {
     // Check if the user is a member of the event
     const eventMember = await this.prisma.eventMember.findFirst({
-      where: {
-        userId: userId,
-        eventId: eventId,
-      },
+      where: { userId: userId, eventId: eventId },
     });
 
     if (!eventMember) {
       throw new NotFoundException('User is not a member of this event');
     }
 
-    // Update the member's prepaid balance
-    const updatedMember = await this.prisma.eventMember.update({
-      where: { id: eventMember.id },
+    // Create the prepay entry
+    return this.prisma.prepay.create({
       data: {
-        prepaidAmount: {
-          increment: amount, // Increment prepaid balance
-        },
+        memberId: eventMember.id,
+        eventId: eventId,
+        amount: amount,
       },
     });
-
-    return updatedMember;
   }
 
+
   // Add spending to the event
-  async addSpending(userId: number, eventId: number, amount: number, description: string, payees: number[]) {
+  async addSpending(userId: number, eventId: number, amount: number, description: string) {
     // Check if the user is a member of the event
     const eventMember = await this.prisma.eventMember.findFirst({
       where: { userId: userId, eventId: eventId },
@@ -92,17 +87,20 @@ export class EventService {
       },
     });
 
-    // Divide spending among payees (selected members)
-    const payeeCount = payees.length;
-    const sharePerPayee = amount / payeeCount;
+    // Divide the spending among all members except the payer
+    const members = await this.prisma.eventMember.findMany({
+      where: { eventId: eventId, NOT: { userId: userId } }, // Exclude payer
+    });
 
-    // Create SpendingDistribution for each payee
-    const distributionPromises = payees.map((payeeId) => {
+    const sharePerMember = amount / members.length;
+
+    // Create SpendingDistribution entries
+    const distributionPromises = members.map((member) => {
       return this.prisma.spendingDistribution.create({
         data: {
           spendingId: spending.id,
-          memberId: payeeId,
-          amount: sharePerPayee,
+          memberId: member.id,
+          amount: sharePerMember,
         },
       });
     });
@@ -110,6 +108,7 @@ export class EventService {
     await Promise.all(distributionPromises);
     return spending;
   }
+
   async getSettlement(userId: number, eventId: number) {
     // Fetch the spending distributions where the user owes money
     const owedToOthers = await this.prisma.spendingDistribution.findMany({

@@ -61,7 +61,7 @@ export class EventController {
     @Body() createSpending: CreateSpendingDto
   ) {
     const {amount, description, payees} = createSpending
-    return this.eventService.addSpending(user.userId, eventId, amount, description, payees);
+    return this.eventService.addSpending(user.userId, eventId, amount, description);
   }
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))

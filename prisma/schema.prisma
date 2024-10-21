@@ -46,6 +46,7 @@ model Event {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
   Invitation Invitation[]
+  Prepay     Prepay[]
 }
 
 model EventMember {
@@ -56,6 +57,7 @@ model EventMember {
   event                Event                  @relation(fields: [eventId], references: [id])
   SpendingDistribution SpendingDistribution[]
   prepaidAmount        Float                  @default(0) // Initial value set to 0
+  Prepay               Prepay[]
 }
 
 model Spending {
@@ -104,4 +106,14 @@ enum InvitationStatus {
   ACCEPTED
   REJECTED
   CANCELED
+}
+
+model Prepay {
+  id        Int         @id @default(autoincrement())
+  eventId   Int
+  event     Event       @relation(fields: [eventId], references: [id])
+  memberId  Int // Reference to the event member who is prepaying
+  member    EventMember @relation(fields: [memberId], references: [id])
+  amount    Float // Amount pre-paid
+  createdAt DateTime    @default(now())
 }

@@ -31,4 +31,14 @@ export class UserController {
   async getUserByEmail(@Param('email') email: string) {
     return this.userService.findUserByEmail(email);
   }
+
+  @ApiOperation({ summary: 'Get all user' })
+  @ApiResponse({ status: 200, description: 'User found.' })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  // @UseGuards(AuthGuard('jwt')) // Protect this route
+  // @Roles(Role.Admin)
+  @Get()
+  async getAllUserTest() {
+    return this.userService.findAllUserForTest()
+  }
 }
