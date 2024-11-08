@@ -17,7 +17,7 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.use(helmet()); // Apply Helmet middleware
   app.enableCors({
-    origin: 'http://localhost:3080',  // Adjust as needed
+    origin: ["http://localhost:3080", "http://localhost:5173"],  // Adjust as needed
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
